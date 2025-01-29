@@ -176,13 +176,17 @@ class ChatComponent extends Component
     public function render()
     {
         if($this->chat) {
-            $this->chat->messages()
-                ->where('user_id', '!=', auth()->id())
+            if(
+                $this->chat->messages()
+                ->where('user_id', '!=', auth()->user()->id)
                 ->where('is_read', false)
-                ->update(['is_read' => true]);
+                ->update(['is_read' => true])
+                ) {
+                
+                //Utilizao la notificacion de mensajes pero deberia crear una nueva notificacion para mensajes leidos
+                Notification::send($this->Users_Notifications, new NewMessage());
+            }
         
-            //Utilizao la notificacion de mensajes pero deberia crear una nueva notificacion para mensajes leidos
-            Notification::send($this->Users_Notifications, new NewMessage());
 
             $this->dispatch('scrollIntoView');
         }
