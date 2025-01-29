@@ -20,8 +20,14 @@ class ChatComponent extends Component
 
     public $bodyMessage;
 
-    protected $listeners = ['notifyNewOrder' => 'notifyNewOrder'];
+    public $users;
 
+    protected $listeners = ['notifyNewOrder' => 'notifyNewOrder'];
+    
+    public function mount()
+    {
+        $this->users = collect();
+    }
 
     //     Listeners       //
 
@@ -30,7 +36,14 @@ class ChatComponent extends Component
         $user_id = auth()->id();
 
         return [
+            //Escucho el evento privado de notificacion de un nuevo mensaje
             "echo-notification:App.Models.User.{$user_id},notification" => 'render',
+            
+            //Escucho el evento presence de notificacion de un nuevo mensaje
+            // Los eventos here, joining y leaving son eventos de presencia de Livewire https://livewire.laravel.com/docs/events#private--presence-channels
+            "echo-presence:chat.1,here" => 'chatHere',
+            "echo-presence:chat.1,joining" => 'chatJoining',
+            "echo-presence:chat.1,leaving" => 'chatLeaving',
         ];
     }
 
@@ -69,7 +82,12 @@ class ChatComponent extends Component
 
     public function getUsersNotificationsProperty()
     {
-        return $this->chat ? $this->chat->users->where('id', '!=', auth()->id()) : [];
+        return $this->chat ? $this->chat->users->where('id', '!=', auth()->id()) : collect();
+    }
+
+    public function getActiveProperty()
+    {
+        return $this->users->contains($this->Users_Notifications->first()->id);
     }
 
     //      Ciclos de Vida       //
@@ -100,6 +118,7 @@ class ChatComponent extends Component
             $this->contactChat = $contact;
             $this->reset('chat', 'bodyMessage', 'search');
         }
+
     }
 
     public function open_Chat(Chat $chat)
@@ -111,7 +130,6 @@ class ChatComponent extends Component
         if($this->chat) {
             $this->dispatch('scrollIntoView');
         }
-
     }
 
     public function sendMessage()
@@ -136,9 +154,36 @@ class ChatComponent extends Component
         $this->reset('bodyMessage', 'contactChat');
     }
 
+    public function chatHere($users)
+    {   //Recibo los usuarios que estan en el chat y los almaceno en una coleccion
+        $this->users = collect($users)->pluck('id');
+    }
+
+    public function chatJoining($user)
+    {   //Agrego el usuario que se une al chat a la coleccion de usuarios
+        $this->users->push($user['id']);
+    }
+
+    public function chatLeaving($user)
+    {   //Elimino el usuario que se va del chat de la coleccion de usuarios
+        $this->users = $this->users->filter(function ($id) use ($user) {
+            return $id != $user['id'];
+        });
+    }
+
+
+    //      Render          //
     public function render()
     {
         if($this->chat) {
+            $this->chat->messages()
+                ->where('user_id', '!=', auth()->id())
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+        
+            //Utilizao la notificacion de mensajes pero deberia crear una nueva notificacion para mensajes leidos
+            Notification::send($this->Users_Notifications, new NewMessage());
+
             $this->dispatch('scrollIntoView');
         }
 

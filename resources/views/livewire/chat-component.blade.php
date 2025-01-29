@@ -53,7 +53,7 @@
                             wire:key="chats-{{ $chatItem->id }}"
                             wire:click="open_Chat({{ $chatItem }})"
                             class="{{ $chat && $chat->id == $chatItem->id ? 'bg-gray-200' : 'bg-white' }} 
-                                    hover:bg-gray-100 px-4 cursor-pointer flex items-center" 
+                                    hover:bg-gray-100 px-4 cursor-pointer flex items-center justify-between" 
                             >
                             
                             <figure>
@@ -61,18 +61,32 @@
                                     src="{{ $chatItem->image }}" alt="{{ $chatItem->name }}" />
                             </figure>
 
-                            <div class="w-[calc(100%-4rem)] ml-4 py-4 border-b border-gray-200" >
+                            <div class="w-[calc(100%-4rem)] py-4 border-b border-gray-200" >
                                 <div class="flex justify-between items-center" >
-                                    <p class="text-lg font-semibold" >
-                                        {{ $chatItem->name }}
-                                    </p>
-                                    <p class="text-xs" >
-                                        {{ $chatItem->messages->last()->created_at->diffForHumans() }}
-                                    </p>
+                                    <div>
+                                        <p class="text-lg font-semibold" >
+                                            {{ $chatItem->name }}
+                                        </p>
+                                        <p class="text-gray-500 text-xs mt-1 truncate " >
+                                            {{ $chatItem->messages->last()->body }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs " >
+                                            {{ $chatItem->messages->last()->created_at->diffForHumans() }}
+                                        </p>
+                                        
+                                        @if ($chatItem->unread_Messages > 0)
+
+                                            <span class="inline-flex items-center py-1.5 px-3 rounded-full text-xs 
+                                                    font-medium bg-teal-100 text-teal-800 text-right">
+                                                {{ $chatItem->unread_Messages }}
+                                            </span>
+                                        
+                                        @endif
+                                    </div>
+
                                 </div>
-                                <p class="text-gray-500 text-xs truncate " >
-                                    {{ $chatItem->messages->last()->body }}
-                                </p>
                             </div>
                             
 
@@ -110,8 +124,8 @@
                         <p class="text-gray-600 text-xs " x-show="chat_id == typingChatId" >
                             Escribiendo...
                         </p>
-                        <p class="text-green-500 text-xs " x-show="chat_id != typingChatId " >
-                            Online
+                        <p class="{{ $this->active ? 'text-green-500' : 'text-red-500' }} text-xs " x-show="chat_id != typingChatId " >
+                            {{ $this->active ? 'En Linea' : 'Desconectado' }}
                         </p>
                     </div>
                 </div>
@@ -127,6 +141,11 @@
                                 </p>
                                 <p class="text-xs mt-1 text-gray-600 {{ $message->user_id == auth()->id() ? 'text-right' : 'text-left' }}" >
                                     {{ $message->created_at->diffForHumans() }}
+
+                                    @if (auth()->id() == $message->user_id)
+                                        <i class="fas fa-check-double ml-2 {{ $message->is_read ? 'text-blue-500' : 'text-gray-300' }}"></i>
+                                    @endif
+                                    
                                 </p>
                             </div>
                         </div>
