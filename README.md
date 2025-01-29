@@ -6,6 +6,8 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
+PROYECTO DISEÑADO EN LARAVEL 11
+UTILIZA LIVEWIRE 3, ALPINE Y PUSHER PARA LA TRANSMISION DE EVENTOS
 
 ## About Laravel
 
